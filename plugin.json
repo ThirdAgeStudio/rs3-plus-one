@@ -1,0 +1,17 @@
+{
+  "name": "Plus One",
+  "version": "0.30.0",
+  "contactEmailAddress": "support@thirdagestudio.com",
+  "requiredPermissions": [],
+  "optionalPermissions": [
+    "httpAccess"
+  ],
+  "requiredDependencies": {},
+  "optionalDependencies": {
+    "DevTools": "dev-tools"
+  },
+  "hasRibbonIcon": true,
+  "urls": {
+    "server": "http://localhost:8787"
+  }
+}

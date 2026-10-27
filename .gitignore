@@ -1,0 +1,7 @@
+# kept locally, not pushed
+docs/
+tests/
+build.json
+# release zips
+*.zip
+dist/
