@@ -2,6 +2,7 @@
 docs/
 tests/
 build.json
+release.sh
 # release zips
 *.zip
 dist/
