@@ -13,11 +13,8 @@ local W = require("ui/widgets")
 local Net = require("game/net")
 local GameReaper = require("game/reaper")
 
-local function useDevTools(enabled)
-    Log.use(enabled and DevTools or nil)
-    Log.enable("window", "action", "net")
-end
-useDevTools(true)
+Log.use(DevTools)
+Log.enable("window", "action", "net")
 
 -- dev/ is only in the dev build
 -- the client's require returns nil for a missing file rather than raising, so the result is checked as well
@@ -313,10 +310,6 @@ local function redrawAfterPoll()
     redraw()
 end
 Event.OptionalPermissionChanged.Subscribe("plus-one-permission", function() redraw() end)
--- Dev Tools can be turned on after Plus One, or reloaded under it
-Event.OptionalDependencyChanged.Subscribe("plus-one-dev-tools", function(event)
-    pcall(useDevTools, event.enabled)
-end)
 Net.start({
     changed = redrawAfterPoll,
     open = function() return window:isOpen() end,
@@ -330,7 +323,6 @@ function PluginShutdown()
     Event.ContentLayerReady.Unsubscribe("plus-one-tab")
     Event.ServerLogic.Unsubscribe("plus-one-reaper")
     Event.OptionalPermissionChanged.Unsubscribe("plus-one-permission")
-    Event.OptionalDependencyChanged.Unsubscribe("plus-one-dev-tools")
     window:close()
     if tabRoot ~= nil then pcall(function() tabRoot:Destroy() end) end
 end

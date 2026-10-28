@@ -9,6 +9,9 @@ local Identity = require("dev/identity")
 
 local Tools = {}
 
+local hasVersion, built = pcall(require, "dev/version")
+print(string.format("Plus One (dev) %s loaded", hasVersion and type(built) == "table" and built.version or "unknown version"))
+
 local CLIENT_KEY = "devClient"
 
 function Tools.keepClient(net)
@@ -79,13 +82,9 @@ local keepingAlive, aliveTicks = false, 0
 
 local function ask(net, path, body, quiet)
     body.client = net.client()
-    local ok, err = pcall(function()
-        local request = HTTPRequest.new(Plugin.urls.server, path)
-        request:AddHeader("Content-Type", "application/json")
-        request:Post(Json.encode(body), function(reply)
-            if quiet then return end
-            Log.log("action", "dev %s: %s %s", path, tostring(reply.responseCode), tostring(reply.data or ""):sub(1, 120))
-        end)
+    local ok, err = pcall(net.request, path, body, function(answer, reason, code)
+        if quiet then return end
+        Log.log("action", "dev %s: %s %s", path, tostring(code or 200), reason or Json.encode(answer):sub(1, 120))
     end)
     if not ok then Log.log("action", "dev %s failed: %s", path, tostring(err)) end
 end

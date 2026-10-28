@@ -49,10 +49,17 @@ local function load(key)
     }
 end
 
+-- a reply that lands after the plugin has unloaded crashes the client, so shutdown cancels whatever is still out
+local outstanding = {}
+local stopped = false
+
 local function send(path, body, done)
     local request = HTTPRequest.new(Plugin.urls.server, path)
     request:AddHeader("Content-Type", "application/json")
+    outstanding[request] = true
     request:Post(Json.encode(body), function(reply)
+        outstanding[request] = nil
+        if stopped then return end
         local ok, answer = pcall(Json.decode, reply.data or "")
         if reply.successful and reply.responseCode == 200 and ok then
             done(answer, nil, reply.responseCode)
@@ -186,17 +193,23 @@ local function handlePoll(answer, reason)
         return
     end
     local restarted, boardChanged = Sync.apply(sync, answer)
+    local why = {}
+    if boardChanged then why[#why + 1] = restarted and "restart" or "board" end
     if restarted then poolCopy, poolParties = Pool.newCopy(), {} end
     if restarted then save(held) end
     local mineChanged = false
     if answer.stats then
         stats = answer.stats
         local summary = string.format("%s %s", tostring(stats.online), tostring(stats.poolPlayers))
-        if summary ~= statsSummary then statsSummary, boardChanged = summary, true end
+        if summary ~= statsSummary then
+            statsSummary, boardChanged = summary, true
+            why[#why + 1] = "stats " .. summary
+        end
     end
     if answer.pool then
         if Pool.apply(poolCopy, answer.pool, answer.cursor) then
             poolParties, boardChanged = Pool.list(poolCopy), true
+            why[#why + 1] = "pool"
         end
     end
     local mine, applied, pool = held.mine, held.applied, held.pool
@@ -243,8 +256,7 @@ local function handlePoll(answer, reason)
     if restarted then pollNow = true end
     waitSeconds = answer.interval or 30
     if boardChanged or mineChanged then
-        Log.log("net", "poll changed: board %s, mine %s, pool sent %s", tostring(boardChanged), tostring(mineChanged),
-            tostring(answer.pool ~= nil))
+        Log.log("net", "poll changed: %s%s", table.concat(why, ", "), mineChanged and " mine" or "")
         onChange()
     end
 end
@@ -474,8 +486,15 @@ function Net.start(options)
     end))
 end
 
+function Net.request(path, body, done)
+    send(path, body, guarded(path, done))
+end
+
 function Net.stop()
+    stopped = true
     pcall(function() Event.ServerLogic.Unsubscribe("plus-one-net") end)
+    for request in pairs(outstanding) do pcall(request.Cancel, request) end
+    outstanding = {}
 end
 
 return Net

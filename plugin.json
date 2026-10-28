@@ -1,17 +1,15 @@
 {
   "name": "Plus One",
-  "version": "0.31.0",
+  "version": "0.31.7",
   "contactEmailAddress": "support@thirdagestudio.com",
   "requiredPermissions": [],
   "optionalPermissions": [
     "httpAccess"
   ],
   "requiredDependencies": {},
-  "optionalDependencies": {
-    "DevTools": "dev-tools"
-  },
+  "optionalDependencies": {},
   "hasRibbonIcon": true,
   "urls": {
-    "server": "http://localhost:8787"
+    "server": "https://plus-one-server-oy7aapzspq-nw.a.run.app"
   }
 }
